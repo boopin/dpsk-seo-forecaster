@@ -2,6 +2,7 @@ import pandas as pd
 from prophet import Prophet
 import streamlit as st
 import matplotlib.pyplot as plt
+from io import BytesIO
 
 # Set page config for the browser tab
 st.set_page_config(
@@ -68,16 +69,43 @@ if uploaded_file is not None:
     st.write(f"### 🔮 Forecasted Traffic for the Next {forecast_duration}")
     st.write(forecast_df)
 
+    # Calculate percentage change for forecasted vs uploaded data
+    uploaded_traffic = df['y'].sum()  # Total traffic in uploaded data
+    forecasted_traffic = forecast_df['Forecasted Traffic'].sum()  # Total forecasted traffic
+
+    if forecast_duration == "6 Months":
+        uploaded_traffic_period = df['y'].tail(6).sum()  # Last 6 months of uploaded data
+    else:
+        uploaded_traffic_period = df['y'].sum()  # Full 12 months of uploaded data
+
+    percentage_change = ((forecasted_traffic - uploaded_traffic_period) / uploaded_traffic_period) * 100
+
+    st.write(f"### 📈 Percentage Change in Traffic")
+    st.write(f"**Forecasted Traffic for Next {forecast_duration}:** {forecasted_traffic:,}")
+    st.write(f"**Uploaded Traffic for Last {forecast_duration}:** {uploaded_traffic_period:,}")
+    st.write(f"**Percentage Change:** {percentage_change:.2f}%")
+
     # Plot the forecast with a line graph
-    st.write("### 📈 Forecasted Traffic Over Time")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color='blue')
+    st.write("### 📊 Forecasted Traffic Over Time")
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color='blue', linewidth=2)
     ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='lightblue', alpha=0.3, label='Uncertainty Range')
-    ax.set_xlabel('Month')
-    ax.set_ylabel('Organic Traffic')
-    ax.set_title(f'SEO Traffic Forecast for the Next {forecast_duration}')
+    ax.set_xlabel('Month', fontsize=12)
+    ax.set_ylabel('Organic Traffic', fontsize=12)
+    ax.set_title(f'SEO Traffic Forecast for the Next {forecast_duration}', fontsize=14)
     ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
     st.pyplot(fig)
+
+    # Export the graph as an image for PPT
+    buf = BytesIO()
+    fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
+    st.download_button(
+        label="📥 Download Graph for PPT",
+        data=buf.getvalue(),
+        file_name="traffic_forecast.png",
+        mime="image/png"
+    )
 
     # Plot forecast components
     st.write("### 🧩 Forecast Components")
