@@ -144,13 +144,13 @@ if uploaded_file is not None:
             uploaded_traffic_period = df['y'].sum()  # Full 12 months of uploaded data
 
         percentage_change = ((forecasted_traffic - uploaded_traffic_period) / uploaded_traffic_period) * 100
-        percentage_change_rounded = round(percentage_change, 2)  # Round to 2 decimal places
+        percentage_change_rounded = round(percentage_change)  # Round to zero decimal places
 
         st.header("📈 Traffic Growth Insights")
         col1, col2, col3 = st.columns(3)
         col1.metric("Forecasted Traffic", f"{forecasted_traffic:,}")
         col2.metric("Uploaded Traffic", f"{uploaded_traffic_period:,}")
-        col3.metric("Percentage Change", f"{percentage_change_rounded}%")
+        col3.metric("Percentage Change", f"{percentage_change_rounded}%")  # Display rounded percentage
 
         # Create a DataFrame for percentage change data
         percentage_change_df = pd.DataFrame({
