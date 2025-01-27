@@ -54,7 +54,7 @@ st.title("🚀 SEO Traffic Forecaster")
 st.markdown("**Predict your website's organic traffic with AI-powered forecasting.**")
 st.markdown("*Upload your monthly traffic data and get accurate predictions in seconds!*")
 
-# Upload CSV file
+# Upload CSV or Excel file
 st.sidebar.header("📂 Upload Your Data")
 uploaded_file = st.sidebar.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
 
@@ -148,12 +148,29 @@ if uploaded_file is not None:
             uploaded_traffic_period = df['y'].sum()  # Full 12 months of uploaded data
 
         percentage_change = ((forecasted_traffic - uploaded_traffic_period) / uploaded_traffic_period) * 100
+        percentage_change_rounded = round(percentage_change, 2)  # Round to 2 decimal places
 
         st.header("📈 Traffic Growth Insights")
         col1, col2, col3 = st.columns(3)
         col1.metric("Forecasted Traffic", f"{forecasted_traffic:,}")
         col2.metric("Uploaded Traffic", f"{uploaded_traffic_period:,}")
-        col3.metric("Percentage Change", f"{percentage_change:.2f}%")
+        col3.metric("Percentage Change", f"{percentage_change_rounded}%")
+
+        # Create a DataFrame for percentage change data
+        percentage_change_df = pd.DataFrame({
+            "Metric": ["Forecasted Traffic", "Uploaded Traffic", "Percentage Change"],
+            "Value": [forecasted_traffic, uploaded_traffic_period, percentage_change_rounded]
+        })
+
+        # Export percentage change data as CSV
+        csv_buffer = BytesIO()
+        percentage_change_df.to_csv(csv_buffer, index=False)
+        st.download_button(
+            label="📥 Download Percentage Change Data (CSV)",
+            data=csv_buffer.getvalue(),
+            file_name="percentage_change.csv",
+            mime="text/csv"
+        )
 
         # Plot the forecast with a line graph
         st.header("📊 Forecasted Traffic Over Time")
