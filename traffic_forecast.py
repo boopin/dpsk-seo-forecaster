@@ -12,7 +12,7 @@ st.set_page_config(
 
 # Streamlit app title and tagline
 st.title("🚀 SEO Traffic Forecaster")
-st.markdown("**Predict your website's organic traffic for the next 6 months with AI-powered forecasting.**")
+st.markdown("**Predict your website's organic traffic with AI-powered forecasting.**")
 st.markdown("*Upload your monthly traffic data and get accurate predictions in seconds!*")
 
 # Upload CSV file
@@ -28,16 +28,29 @@ if uploaded_file is not None:
     df = df.rename(columns={'Month': 'ds', 'Organic Traffic': 'y'})
     df['ds'] = pd.to_datetime(df['ds'], format='%b-%y')
 
+    # Let the user choose the forecast duration
+    forecast_duration = st.radio(
+        "📅 Select Forecast Duration",
+        options=["6 Months", "12 Months"],
+        index=0  # Default to 6 Months
+    )
+
+    # Set the number of periods based on user selection
+    if forecast_duration == "6 Months":
+        periods = 6
+    else:
+        periods = 12
+
     # Initialize and fit Prophet model
     model = Prophet()
     model.fit(df)
 
     # Create future dataframe for forecasting
-    future = model.make_future_dataframe(periods=6, freq='M')  # Forecast for next 6 months
+    future = model.make_future_dataframe(periods=periods, freq='M')  # Forecast for selected duration
     forecast = model.predict(future)
 
     # Format the forecasted data
-    forecast_df = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6)
+    forecast_df = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(periods)
     forecast_df['ds'] = forecast_df['ds'].dt.strftime('%b-%y')  # Format date as "Jan-25"
     forecast_df['yhat'] = forecast_df['yhat'].round().astype(int)  # Round off forecasted traffic
     forecast_df['yhat_lower'] = forecast_df['yhat_lower'].round().astype(int)  # Round off lower bound
@@ -52,7 +65,7 @@ if uploaded_file is not None:
     })
 
     # Display forecast
-    st.write("### 🔮 Forecasted Traffic for the Next 6 Months")
+    st.write(f"### 🔮 Forecasted Traffic for the Next {forecast_duration}")
     st.write(forecast_df)
 
     # Plot the forecast with a line graph
@@ -62,7 +75,7 @@ if uploaded_file is not None:
     ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='lightblue', alpha=0.3, label='Uncertainty Range')
     ax.set_xlabel('Month')
     ax.set_ylabel('Organic Traffic')
-    ax.set_title('SEO Traffic Forecast')
+    ax.set_title(f'SEO Traffic Forecast for the Next {forecast_duration}')
     ax.legend()
     st.pyplot(fig)
 
