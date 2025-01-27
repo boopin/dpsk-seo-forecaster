@@ -8,8 +8,46 @@ from io import BytesIO
 st.set_page_config(
     page_title="SEO Traffic Forecaster",  # Browser tab title
     page_icon="🚀",  # Favicon (emoji or file path)
-    layout="centered"  # Page layout
+    layout="centered",  # Page layout
+    initial_sidebar_state="expanded"  # Expand sidebar by default
 )
+
+# Custom CSS for better UI
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #f5f5f5;
+    }
+    .stHeader {
+        color: #2c3e50;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    .stRadio>div {
+        flex-direction: row;
+        gap: 20px;
+    }
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+        color: #2c3e50;
+    }
+    .stDataFrame {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .stDownloadButton>button {
+        background-color: #008CBA;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # Streamlit app title and tagline
 st.title("🚀 SEO Traffic Forecaster")
@@ -17,21 +55,22 @@ st.markdown("**Predict your website's organic traffic with AI-powered forecastin
 st.markdown("*Upload your monthly traffic data and get accurate predictions in seconds!*")
 
 # Upload CSV file
-uploaded_file = st.file_uploader("📂 Upload your CSV file with monthly traffic data", type=["csv"])
+st.sidebar.header("📂 Upload Your Data")
+uploaded_file = st.sidebar.file_uploader("Choose a CSV file", type=["csv"])
 
 if uploaded_file is not None:
     # Read the CSV file
     df = pd.read_csv(uploaded_file)
-    st.write("### 📊 Uploaded Data")
-    st.write(df)
+    st.sidebar.success("File uploaded successfully!")
 
     # Prepare data for Prophet
     df = df.rename(columns={'Month': 'ds', 'Organic Traffic': 'y'})
     df['ds'] = pd.to_datetime(df['ds'], format='%b-%y')
 
     # Let the user choose the forecast duration
-    forecast_duration = st.radio(
-        "📅 Select Forecast Duration",
+    st.sidebar.header("📅 Forecast Settings")
+    forecast_duration = st.sidebar.radio(
+        "Select Forecast Duration",
         options=["6 Months", "12 Months"],
         index=0  # Default to 6 Months
     )
@@ -66,8 +105,8 @@ if uploaded_file is not None:
     })
 
     # Display forecast
-    st.write(f"### 🔮 Forecasted Traffic for the Next {forecast_duration}")
-    st.write(forecast_df)
+    st.header("🔮 Forecasted Traffic")
+    st.dataframe(forecast_df.style.background_gradient(cmap='Blues'), height=300)
 
     # Calculate percentage change for forecasted vs uploaded data
     uploaded_traffic = df['y'].sum()  # Total traffic in uploaded data
@@ -80,16 +119,17 @@ if uploaded_file is not None:
 
     percentage_change = ((forecasted_traffic - uploaded_traffic_period) / uploaded_traffic_period) * 100
 
-    st.write(f"### 📈 Percentage Change in Traffic")
-    st.write(f"**Forecasted Traffic for Next {forecast_duration}:** {forecasted_traffic:,}")
-    st.write(f"**Uploaded Traffic for Last {forecast_duration}:** {uploaded_traffic_period:,}")
-    st.write(f"**Percentage Change:** {percentage_change:.2f}%")
+    st.header("📈 Traffic Growth Insights")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Forecasted Traffic", f"{forecasted_traffic:,}")
+    col2.metric("Uploaded Traffic", f"{uploaded_traffic_period:,}")
+    col3.metric("Percentage Change", f"{percentage_change:.2f}%")
 
     # Plot the forecast with a line graph
-    st.write("### 📊 Forecasted Traffic Over Time")
+    st.header("📊 Forecasted Traffic Over Time")
     fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color='blue', linewidth=2)
-    ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='lightblue', alpha=0.3, label='Uncertainty Range')
+    ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color='#4CAF50', linewidth=2)
+    ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='lightgreen', alpha=0.3, label='Uncertainty Range')
     ax.set_xlabel('Month', fontsize=12)
     ax.set_ylabel('Organic Traffic', fontsize=12)
     ax.set_title(f'SEO Traffic Forecast for the Next {forecast_duration}', fontsize=14)
@@ -108,8 +148,8 @@ if uploaded_file is not None:
     )
 
     # Plot forecast components
-    st.write("### 🧩 Forecast Components")
+    st.header("🧩 Forecast Components")
     fig2 = model.plot_components(forecast)
     st.pyplot(fig2)
 else:
-    st.write("👋 Please upload a CSV file to get started.")
+    st.info("👋 Please upload a CSV file to get started.")
