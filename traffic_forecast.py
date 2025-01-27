@@ -78,10 +78,6 @@ if uploaded_file is not None:
             st.error("The uploaded file must contain 'Month' and 'Organic Traffic' columns.")
             st.stop()
 
-        # Debug: Print the first few rows of the 'Month' column
-        st.write("### 🛠️ Debugging: First Few Rows of 'Month' Column")
-        st.write(df['Month'].head())
-
         # Convert 'Month' column to datetime
         try:
             df['ds'] = pd.to_datetime(df['Month'], format='%b-%y')  # Try parsing with expected format
