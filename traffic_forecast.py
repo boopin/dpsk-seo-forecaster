@@ -74,8 +74,17 @@ if uploaded_file is not None:
         st.write(df)
 
         # Check if the required columns exist
-        if 'Month' not in df.columns or 'Organic Traffic' not in df.columns:
-            st.error("The uploaded file must contain 'Month' and 'Organic Traffic' columns.")
+        if 'Month' not in df.columns:
+            st.error("The uploaded file must contain a 'Month' column.")
+            st.stop()
+
+        # Check for either 'Organic Traffic' or 'Traffic' column
+        if 'Organic Traffic' in df.columns:
+            traffic_column = 'Organic Traffic'
+        elif 'Traffic' in df.columns:
+            traffic_column = 'Traffic'
+        else:
+            st.error("The uploaded file must contain either 'Organic Traffic' or 'Traffic' column.")
             st.stop()
 
         # Convert 'Month' column to datetime
@@ -91,7 +100,7 @@ if uploaded_file is not None:
             st.stop()
 
         # Prepare data for Prophet
-        df = df.rename(columns={'Organic Traffic': 'y'})
+        df = df.rename(columns={traffic_column: 'y'})
 
         # Let the user choose the forecast duration
         st.sidebar.header("📅 Forecast Settings")
