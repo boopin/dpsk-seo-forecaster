@@ -6,8 +6,8 @@ from io import BytesIO
 
 # Set page config for the browser tab
 st.set_page_config(
-    page_title="ForecastEdge - Organic Traffic Forecaster",  # Browser tab title
-    page_icon="🚀",  # Favicon (emoji or file path)
+    page_title="ForecastEdge",  # Browser tab title
+    page_icon="📈",  # Favicon (emoji or file path)
     layout="centered",  # Page layout
     initial_sidebar_state="expanded"  # Expand sidebar by default
 )
@@ -50,9 +50,9 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Streamlit app title and tagline
-st.title("🚀 Forecast Edge - Organic Traffic Forecaster")
-st.markdown("**Predict your website's organic traffic with AI-powered forecasting.**")
-st.markdown("*Upload your monthly traffic data and get accurate predictions in seconds!*")
+st.title("📈 ForecastEdge")
+st.markdown("**Your AI-powered forecasting tool for accurate traffic predictions.**")
+st.markdown("*Upload your monthly traffic data and get actionable insights in seconds!*")
 
 # Upload CSV or Excel file
 st.sidebar.header("📂 Upload Your Data")
