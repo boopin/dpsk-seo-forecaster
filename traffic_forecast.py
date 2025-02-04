@@ -50,7 +50,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Streamlit app title and tagline
-st.title("🚀 SEO Traffic Forecaster")
+st.title("🚀 ForecastEdge - SEO Traffic Forecaster")
 st.markdown("**Predict your website's organic traffic with AI-powered forecasting.**")
 st.markdown("*Upload your monthly traffic data and get accurate predictions in seconds!*")
 
