@@ -2,7 +2,7 @@
 
 **Predict your website's organic traffic for the next 6 months with AI-powered forecasting.**
 
-This Streamlit app uses **Facebook Prophet**, a powerful forecasting tool, to analyze historical traffic data and predict future organic traffic. Simply upload a CSV file with your monthly traffic data, and the app will generate a forecast for the next 6 months, complete with a line graph and trend analysis.
+This Streamlit app uses **Facebook Prophet**, a powerful forecasting tool, to analyze historical traffic data and predict future organic traffic. Simply upload a CSV or XLS file with your monthly traffic data, and the app will generate a forecast for the next 6 months, 12 months complete with a line graph and trend analysis.
 
 ---
 
