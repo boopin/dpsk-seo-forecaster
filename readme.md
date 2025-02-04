@@ -1,4 +1,4 @@
-# 🚀 SEO Traffic Forecaster
+# 🚀 ForecastEdge - SEO Traffic Forecaster
 
 **Predict your website's organic traffic for the next 6 months with AI-powered forecasting.**
 
