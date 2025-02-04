@@ -6,7 +6,7 @@ from io import BytesIO
 
 # Set page config for the browser tab
 st.set_page_config(
-    page_title="ForecastEdge - Traffic Forecaster",  # Browser tab title
+    page_title="ForecastEdge - Traffic Forecasting Tool",  # Updated browser tab title
     page_icon="📈",  # Favicon (emoji or file path)
     layout="centered",  # Page layout
     initial_sidebar_state="expanded"  # Expand sidebar by default
@@ -73,55 +73,41 @@ if uploaded_file is not None:
         st.write("### 📊 Uploaded Data")
         st.write(df)
 
-        # Check if the required columns exist
+        # Validate required columns
         if 'Month' not in df.columns:
             st.error("The uploaded file must contain a 'Month' column.")
             st.stop()
 
-        # Check for either 'Organic Traffic' or 'Traffic' column
-        if 'Organic Traffic' in df.columns:
-            traffic_column = 'Organic Traffic'
-        elif 'Traffic' in df.columns:
-            traffic_column = 'Traffic'
-        else:
-            st.error("The uploaded file must contain either 'Organic Traffic' or 'Traffic' column.")
+        traffic_columns = ['Organic Traffic', 'Traffic']
+        traffic_column = next((col for col in traffic_columns if col in df.columns), None)
+        if not traffic_column:
+            st.error(f"The uploaded file must contain one of the following columns: {', '.join(traffic_columns)}.")
             st.stop()
+        df = df.rename(columns={traffic_column: 'y'})
 
-        # Convert 'Month' column to datetime
-        try:
-            df['ds'] = pd.to_datetime(df['Month'], format='%b-%y')  # Try parsing with expected format
-        except ValueError:
-            st.warning("The 'Month' column is not in the expected format (e.g., 'Jan-24'). Trying alternative parsing...")
-            df['ds'] = pd.to_datetime(df['Month'])  # Fallback to automatic parsing
-
-        # Check for missing or invalid dates
+        # Parse and validate the 'Month' column
+        df['ds'] = pd.to_datetime(df['Month'], errors='coerce')  # Coerce invalid dates to NaT
         if df['ds'].isnull().any():
             st.error("The 'Month' column contains invalid or missing dates. Please check your data.")
             st.stop()
-
-        # Prepare data for Prophet
-        df = df.rename(columns={traffic_column: 'y'})
+        df = df.sort_values(by='ds')  # Ensure dates are sorted chronologically
 
         # Let the user choose the forecast duration
         st.sidebar.header("📅 Forecast Settings")
+        forecast_duration_options = {"6 Months": 6, "12 Months": 12}
         forecast_duration = st.sidebar.radio(
             "Select Forecast Duration",
-            options=["6 Months", "12 Months"],
+            options=list(forecast_duration_options.keys()),
             index=0  # Default to 6 Months
         )
-
-        # Set the number of periods based on user selection
-        if forecast_duration == "6 Months":
-            periods = 6
-        else:
-            periods = 12
+        periods = forecast_duration_options[forecast_duration]
 
         # Initialize and fit Prophet model
         model = Prophet()
         model.fit(df)
 
         # Create future dataframe for forecasting
-        future = model.make_future_dataframe(periods=periods, freq='M')  # Forecast for selected duration
+        future = model.make_future_dataframe(periods=periods, freq='M')
         forecast = model.predict(future)
 
         # Format the forecasted data
@@ -130,8 +116,6 @@ if uploaded_file is not None:
         forecast_df['yhat'] = forecast_df['yhat'].round().astype(int)  # Round off forecasted traffic
         forecast_df['yhat_lower'] = forecast_df['yhat_lower'].round().astype(int)  # Round off lower bound
         forecast_df['yhat_upper'] = forecast_df['yhat_upper'].round().astype(int)  # Round off upper bound
-
-        # Rename columns for better readability
         forecast_df = forecast_df.rename(columns={
             'ds': 'Month',
             'yhat': 'Forecasted Traffic',
@@ -146,12 +130,10 @@ if uploaded_file is not None:
         # Calculate percentage change for forecasted vs uploaded data
         uploaded_traffic = df['y'].sum()  # Total traffic in uploaded data
         forecasted_traffic = forecast_df['Forecasted Traffic'].sum()  # Total forecasted traffic
-
         if forecast_duration == "6 Months":
             uploaded_traffic_period = df['y'].tail(6).sum()  # Last 6 months of uploaded data
         else:
             uploaded_traffic_period = df['y'].sum()  # Full 12 months of uploaded data
-
         percentage_change = ((forecasted_traffic - uploaded_traffic_period) / uploaded_traffic_period) * 100
         percentage_change_rounded = round(percentage_change)  # Round to zero decimal places
 
@@ -174,19 +156,38 @@ if uploaded_file is not None:
             label="📥 Download Percentage Change Data (CSV)",
             data=csv_buffer.getvalue(),
             file_name="percentage_change.csv",
-            mime="text/csv"
+            mime="text/csv",
+            help="Download the percentage change data as a CSV file."
         )
 
         # Plot the forecast with a line graph
         st.header("📊 Forecasted Traffic Over Time")
         fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color='#4CAF50', linewidth=2)
-        ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color='lightgreen', alpha=0.3, label='Uncertainty Range')
+        colors = {
+            "forecast_line": "#4CAF50",
+            "uncertainty_fill": "lightgreen",
+            "grid_lines": "#E0E0E0"
+        }
+        ax.plot(forecast['ds'], forecast['yhat'], label='Forecasted Traffic', color=colors["forecast_line"], linewidth=2)
+        ax.fill_between(forecast['ds'], forecast['yhat_lower'], forecast['yhat_upper'], color=colors["uncertainty_fill"], alpha=0.3, label='Uncertainty Range')
         ax.set_xlabel('Month', fontsize=12)
         ax.set_ylabel('Organic Traffic', fontsize=12)
         ax.set_title(f'SEO Traffic Forecast for the Next {forecast_duration}', fontsize=14)
         ax.legend()
-        ax.grid(True, linestyle='--', alpha=0.6)
+        ax.grid(True, linestyle='--', color=colors["grid_lines"], alpha=0.6)
+
+        # Add annotations for key insights
+        for i, row in forecast_df.iterrows():
+            ax.annotate(
+                f"{row['Forecasted Traffic']}",
+                (row['Month'], row['Forecasted Traffic']),
+                textcoords="offset points",
+                xytext=(0, 10),
+                ha='center',
+                fontsize=8,
+                color='black'
+            )
+
         st.pyplot(fig)
 
         # Export the graph as an image for PPT
@@ -196,7 +197,8 @@ if uploaded_file is not None:
             label="📥 Download Graph for PPT",
             data=buf.getvalue(),
             file_name="traffic_forecast.png",
-            mime="image/png"
+            mime="image/png",
+            help="Download the forecast graph as a PNG image for presentations."
         )
 
         # Plot forecast components
@@ -204,8 +206,10 @@ if uploaded_file is not None:
         fig2 = model.plot_components(forecast)
         st.pyplot(fig2)
 
+    except ValueError as ve:
+        st.error(f"ValueError: {ve}")
     except Exception as e:
-        st.error(f"An error occurred: {e}")
+        st.error(f"An unexpected error occurred: {e}")
         st.write("Please check your file and try again.")
 else:
     st.info("👋 Please upload a CSV or Excel file to get started.")
