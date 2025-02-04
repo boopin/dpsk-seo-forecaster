@@ -6,7 +6,7 @@ from io import BytesIO
 
 # Set page config for the browser tab
 st.set_page_config(
-    page_title="ForecastEdge",  # Browser tab title
+    page_title="ForecastEdge - Traffic Forecaster",  # Browser tab title
     page_icon="📈",  # Favicon (emoji or file path)
     layout="centered",  # Page layout
     initial_sidebar_state="expanded"  # Expand sidebar by default
